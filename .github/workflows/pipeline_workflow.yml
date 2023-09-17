@@ -1,0 +1,45 @@
+# MAKE SURE YOU HAVE A TOKEN IN YOUR REPO SETTINGS
+# GIVE GITHUB ACTIONS WRITE PERMISSIONS TO YOUR REPO OR THERE WILL BE ERRORS AND NO logs
+
+name: run Simple EtL Pipeline
+
+on:
+  schedule:
+  - cron: '0 0 * * 1' # At 00:00 on Monday
+  workflow_dispatch: null
+env:
+  MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }} # set up your MOTHERDUCK_TOKEN secret token in repository settings
+jobs:
+  run_pipeline:
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout repo content
+      uses: actions/checkout@v3 # checkout the repository content
+
+    - name: setup python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11.x' # install the python version needed
+    - uses: syphar/restore-virtualenv@v1
+      id: cache-virtualenv
+      with:
+        requirement_files: requirements.txt
+    - uses: syphar/restore-pip-download-cache@v1
+      if: steps.cache-virtualenv.outputs.cache-hit != 'true'
+    - run: pip install -r requirements.txt
+      if: steps.cache-virtualenv.outputs.cache-hit != 'true'
+    - name: Run pipeline script
+      run: python 'src/simple_pipe.py'
+
+    - name: commit files
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add -A
+        git diff-index --quiet HEAD || (git commit -a -m "updated logs" --allow-empty)
+
+    - name: push changes
+      uses: ad-m/github-push-action@v0.6.0
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        branch: main 
