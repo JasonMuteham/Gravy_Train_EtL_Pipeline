@@ -1,13 +1,11 @@
 [pipeline]
-name = "My_Simple_Pipe"
-description = "My simple pipeline template"
+name = "Gravy_Train_EtL_Pipeline"
+description = "Data pipeline to analyse the expense claims of UK MP's"
 # Database scheme name raw, staging, production etc
 schema = "raw"
 # Database engine local 'duckdb' or remote 'motherduck' 
-#database = "duckdb"
-database = "motherduck"
-# Are we running locally (laptop) or remotely (github actions)
-local = true
+database = "duckdb"
+#database = "motherduck"
 
 [logging]
 level = "INFO"
@@ -60,12 +58,11 @@ sql_write = "replace"
 [duckdb.credentials]
 # local duckdb database name. Remote motherduck credentials are stored in secret.toml
 path = "data/"
-database = "simple_pipe.duckdb"
+database = "gravy_train.duckdb"
 
 [motherduck.credentials]
 # local duckdb database name. Remote motherduck credentials are stored in secret.toml
-path = ""
-database = "simple_pipe"
+database = "gravy_train"
 
 #SQL Filter statements, filter the df_upload DataFrame
 [sql.log_filter]
