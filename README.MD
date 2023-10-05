@@ -2,7 +2,7 @@
 
 Extract UK MP details from the Houses of Parliament API & expense claims from the Independent Parliamentary Standards Authority.
 
-Uses a modified version of
+Uses a version of
 
 # Simple EtL Pipeline
 
@@ -12,12 +12,7 @@ Flat Files -> transform -> DuckDB or Motherduck
 
 Test pipeline locally with **DuckDB** then to the cloud with **Motherduck**.
 
-Currently works with excel & csv files.  
-
-Uses pandas for import and Duckdb native connection/SQL for export to database.
-
-Transformation of the data is performed as a SQL select on the loaded DataFrame.
-
+### python src/simple_pipe.py ###
 
 # pipeline.toml
 
