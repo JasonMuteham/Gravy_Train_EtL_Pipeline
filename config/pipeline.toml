@@ -12,13 +12,25 @@ level = "INFO"
 log_folder = "log"
 logfile = "gravy_train.log"
 
-[task.get_mps_expense_data]
-active = true
-description = "Call a custom function to extract MP data from APIs and all expenses data in .csv files"
+[task.get_mps_data]
+active = false
+description = "Call a custom function to extract MP & name history data from APIs"
 file_type = "function.custom.get_mps_data"
 param.mp_csv = "data/mp.csv"
-param.expenses_csv = "data/expense_urls.csv"
-param.expenses_folder = "data/expenses"
+param.name_history_folder = "data/name_history"
+
+[task.get_constituency_data]
+active = true
+description = "Call a custom function to extract constituency & representation data from APIs"
+file_type = "function.custom.get_constituency_data"
+param.file_csv = "data/constituency.csv"
+param.constituency_rep_folder = "data/constituency_representation"
+
+[task.get_constituency_geometry_data]
+active = false
+description = "Call a custom function to extract constituency geometry data from APIs"
+file_type = "function.custom.get_constituency_geometry_data"
+param.file_csv = "data/constituency_geometry.csv"
 
 [task.load_mps]
 active = false
@@ -33,9 +45,27 @@ sql_write = "replace"
 active = false
 description = "Load MP data from csv file"
 file_type = "csv"
-url = "data/expenses/*.csv"
+url = "data/expenses/individual_business_costs/*.csv"
 sql_filter = ""
 sql_table = "expenses"
+sql_write = "replace"
+
+[task.load_name_history]
+active = false
+description = "Load MP name data from csv file"
+file_type = "csv"
+url = "data/name_history/*.csv"
+sql_filter = ""
+sql_table = "mp_names"
+sql_write = "replace"
+
+[task.date_table]
+active = false
+file_type = "csv"
+description = "Date Dimension table"
+url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRfi-0s1R6HmQMW2r_ywPQlpwSvpDVr3s0t6MJPgt88bmHR7R5Md0YWkHpeIj7NtuuSgt0vQiL66t1G/pub?gid=1535779642&single=true&output=csv"
+sql_filter = ""
+sql_table = "dim_dates"
 sql_write = "replace"
 
 

@@ -1,27 +1,122 @@
 from pathlib import Path
 import requests
 import pandas as pd
+import geopandas as gpd
+from shapely.geometry import Polygon
 import logging
-import get
+import json
 from tenacity import retry, stop_after_attempt, wait_fixed, TryAgain
 
-def get_mps_data(parms):
-    mp_csv = parms['mp_csv']
-    expense_csv = parms['expenses_csv']
-    expense_folder = parms['expenses_folder']
-    logging.info(f"- custom.get_mps_data: {parms}")
+def get_constituency_data(params):
+    const_csv = params['file_csv']
+    const_folder = params['constituency_rep_folder']
+
+    logging.info(f"- custom.get_constituency_data: {params}")
 
     try:
-        Path(expense_folder).mkdir(exist_ok=True)
+        Path(const_folder).mkdir(exist_ok=True)
+    except Exception as e:
+        logging.critical(f"- custom.get_constituency_data: {e}")
+        print(e)
+        raise 
+
+    get_constituency_json(const_csv, const_folder=const_folder, geo_folder=geo_folder) 
+
+def get_constituency_json(const_csv, const_folder=None, geo_folder=None):
+    take = 20
+    skip = 0
+    @retry(stop=stop_after_attempt(3), reraise=True, wait=wait_fixed(2))
+    def get_total_const():
+    # Get total constituency on parliament database
+    # This url will return no constituency but will return a total count
+        url = "https://members-api.parliament.uk/api/Location/Constituency/Search?"
+        params = {'skip': 10000, 'take': take}
+        try:
+            r = requests.get(url, params=params)
+        except Exception as e:
+            logging.critical(f"- custom.get_constituency: {e}")
+            #print(e)
+            raise TryAgain
+            return
+
+        json_data = r.json()
+        total_const = json_data["totalResults"]
+        logging.info(f"- custom.get_mps_json: {total_const} constituency")
+        return total_const
+
+    try:
+        total_const = get_total_const()
+    except TryAgain:
+        logging.critical('- custom.get_constituency_json: Retry limit reached')
+        print("Oh No! pipe went out...")
+        return
+
+    df = pd.DataFrame()
+    url = 'https://members-api.parliament.uk/api/Location/Constituency/Search?'
+    params = {'skip': skip, 'take': take}
+ 
+    @retry(stop=stop_after_attempt(3), reraise=True, wait=wait_fixed(2))
+    def read_const_api(url,params):
+        try:
+            return requests.get(url, params=params)
+        except Exception as e:
+            logging.critical(f"- custom.get_constituency_json: {e}")
+            #print(e)
+            raise TryAgain
+    
+    while skip <= total_const:
+        try:
+            r = read_const_api(url, params)
+        except TryAgain:
+            logging.critical('- custom.get_constituency_json: Retry limit reached')
+            print("Oh No! pipe went out...")
+            return
+        else:    
+            json_data = r.json()
+            skip += take
+            params["skip"] = skip
+            df_const = pd.json_normalize(json_data["items"],sep='_')
+            df = pd.concat([df, df_const])    
+            logging.info(f"- custom.get_constituency_json: {df['value_id'].count()} constituency extracted")
+            
+            for id in df_const["value_id"]:
+                const_rep_url = f'https://members-api.parliament.uk/api/Location/Constituency/{id}/Representations'
+                try:
+                    r = requests.get(const_rep_url)
+                    rep_data = r.json()
+                except Exception as e:
+                        logging.error(f"- custom.get_constituency_json: {e}")
+                else:
+                    const_df = pd.json_normalize(rep_data["value"] ,sep='_')
+                    if not(const_df.empty):
+                        const_df['constituency_id'] = id
+                        const_df.to_csv(f'{const_folder}/rep_{str(id)}.csv', index=False)
+                
+
+    logging.info(f"- custom.get_constituency_json: {df.shape}")
+    if const_csv is not None:
+        logging.info(f"- custom.get_constituency_json: Writing data locally to {const_csv}")
+        try:
+            df.to_csv(const_csv, index=False)
+        except Exception as e:
+            logging.error(f"- custom.get_constituency_json: {e}")
+    return 
+
+def get_mps_data(params):
+    mp_csv = params['mp_csv']
+    history_folder = params['name_history_folder']
+    logging.info(f"- custom.get_mps_data: {params}")
+
+    try:
+        Path(history_folder).mkdir(exist_ok=True)
     except Exception as e:
         logging.critical(f"- custom.get_mps_data: {e}")
         print(e)
         raise 
+  
+    get_mps_json(mp_csv, history_folder=history_folder)  
 
-#   get_mps(mp_csv, expense_csv, expense_folder)
-    get_mps_json(mp_csv, expense_csv, expense_folder)    
-
-def get_mps_json(mp_csv=None, expense_csv=None, expense_folder=None):
+def get_mps_json(mp_csv, history_folder=None):
     take = 20
     skip = 0
     #total_mps = 0
@@ -31,7 +126,8 @@ def get_mps_json(mp_csv=None, expense_csv=None, expense_folder=None):
     # This url will return no mps but will return a total count
         url = "https://members-api.parliament.uk/api/Members/Search?"
 
-        params = {'House': 1, 'skip': 10000, 'take': take, 'IsEligible':'true', 'IsCurrentMember': 'true'}
+        #params = {'House': 1, 'skip': 10000, 'take': take}
+        params = {'skip': 10000, 'take': take}
         try:
             r = requests.get(url, params=params)
         except Exception as e:
@@ -53,10 +149,9 @@ def get_mps_json(mp_csv=None, expense_csv=None, expense_folder=None):
         return
 
     df = pd.DataFrame()
-    expenses_url = []
     url = 'https://members-api.parliament.uk/api/Members/Search?'
-    params = {'House': 1, 'skip': skip, 'take': take, 'IsEligible':'true', 'IsCurrentMember': 'true'}
-
+    params = {'skip': skip, 'take': take}
+ 
     @retry(stop=stop_after_attempt(3), reraise=True, wait=wait_fixed(2))
     def read_mps_api(url,params):
         try:
@@ -79,15 +174,25 @@ def get_mps_json(mp_csv=None, expense_csv=None, expense_folder=None):
             params["skip"] = skip
             df_mp = pd.json_normalize(json_data["items"],sep='_')
             df = pd.concat([df, df_mp])    
-            logging.info(f"- custom.get_mps_json: {df["value_id"].count()} mps extracted")
+            logging.info(f"- custom.get_mps_json: {df['value_id'].count()} mps extracted")
+
+            history_name_url = 'https://members-api.parliament.uk/api/Members/History'
+            
             for id in df_mp["value_id"]:
+                # Code to get historical names
+                hist_params = {'ids': id}
                 try:
-                    expense_df = get.csv('https://www.theipsa.org.uk/api/mp/expenses?mpId=' + str(id))
+                    rh = requests.get(history_name_url, params=hist_params)
+                    hist_data = rh.json()
                 except Exception as e:
-                    logging.error(f"- custom.get_mps_json: {e}")
+                        logging.error(f"- custom.get_mps_json: {e}")
                 else:
-                    expenses_url.append('https://www.theipsa.org.uk/api/mp/expenses?mpId=' + str(id))
-                    expense_df.to_csv(f'{expense_folder}/expenses_{str(id)}.csv', index=False)
+                    #print(hist_data)
+                    history_df = pd.json_normalize(hist_data[0]["value"]['nameHistory'] ,sep='_')
+                    if not(history_df.empty):
+                        history_df['mp_id'] = id
+                        history_df.to_csv(f'{history_folder}/name_history_{str(id)}.csv', index=False)
+
 
     logging.info(f"- custom.get_mps_json: {df.shape}")
     if mp_csv is not None:
@@ -97,87 +202,5 @@ def get_mps_json(mp_csv=None, expense_csv=None, expense_folder=None):
         except Exception as e:
             logging.error(f"- custom.get_mps_json: {e}")
 
-    if expense_csv is not None:
-        logging.info(f"- custom.get_mps_json: Writing expense urls locally to {expense_csv}")
-        try:
-            pd.DataFrame(expenses_url, columns=["url"] ).to_csv(expense_csv, index=False)
-        except Exception as e:
-            logging.error(f"- custom.get_mps_json: {e}")
-    logging.info(f"- custom.get_mps_json: Writing expense .csv locally to {expense_folder}")
     return 
 
-def get_mps(mp_csv=None, expense_csv=None, expense_folder=None):
-    take = 20
-    skip = 0
-    total_mps = 0
-
-    # Get total mps on parliament database
-    # This url will return no mps but will return a total count
-
-
-    url = "https://members-api.parliament.uk/api/Members/Search?House=1&IsEligible=true&IsCurrentMember=true&skip=10000&take=20"
-    r = requests.get(url)
-    json_data = r.json()
-    total_mps = json_data["totalResults"]
-    logging.info(f"- custom.get_mps: {total_mps} mps")
-
-    df = pd.DataFrame()
-    expenses_url = []
-
-    while skip <= total_mps:
-        url = 'https://members-api.parliament.uk/api/Members/Search?House=1&IsEligible=true&IsCurrentMember=true&skip='+str(skip)+ '&take='+str(take)  # noqa: E501
-
-        skip += take
-        logging.info(f"- custom.get_mps: {skip} mps extracted")
-        r = requests.get(url)
-        json_data = r.json()
-
-        for f in range(len(json_data["items"])):
-            temp = json_data["items"][f]["value"]
-            mydict = {}
-            mydict["id"] = temp["id"]
-            mydict["name"] = temp["nameDisplayAs"]
-            mydict["full_title"] = temp["nameFullTitle"]
-            mydict["gender"] = temp["gender"]
-            mydict["party_id"] = temp["latestParty"]["id"]
-            mydict["party_name"] = temp["latestParty"]["name"]
-            mydict["constituency"] = temp["latestHouseMembership"]["membershipFrom"]
-            mydict["constituency_id"] = temp["latestHouseMembership"]["membershipFromId"]
-            mydict["start_date"] = temp["latestHouseMembership"]["membershipStartDate"]
-            mydict["end_date"] = temp["latestHouseMembership"]["membershipEndDate"]
-            mydict["end_reason"] = temp["latestHouseMembership"]["membershipEndReason"]
-
-            if temp["latestHouseMembership"]["membershipStatus"] is None:
-                mydict["membership_active"] = False
-                mydict["membership_description"] = "Non Member"
-            else:
-                mydict["membership_active"] = temp["latestHouseMembership"]["membershipStatus"]["statusIsActive"]
-                mydict["membership_description"] = temp["latestHouseMembership"][
-                "membershipStatus"
-            ]["statusDescription"]
-
-
-            df1 = pd.DataFrame.from_records([mydict])
-            df = pd.concat([df, df1])
-
-            expenses_url.append('https://www.theipsa.org.uk/api/mp/expenses?mpId=' + str(mydict["id"]))
-            expense_df = get.csv('https://www.theipsa.org.uk/api/mp/expenses?mpId=' + str(mydict["id"]))
-            expense_df.to_csv(f'{expense_folder}/expenses_{str(mydict["id"])}.csv', index=False)
-
-
-    logging.info(f"- custom.get_mps: {df.shape}")
-    if mp_csv is not None:
-        logging.info(f"- custom.get_mps: Writing data locally to {mp_csv}")
-        try:
-            df.to_csv(mp_csv, index=False)
-        except Exception as e:
-            logging.error(f"- custom.get_mps: {e}")
-
-    if expense_csv is not None:
-        logging.info(f"- custom.get_mps: Writing expense urls locally to {expense_csv}")
-        try:
-            pd.DataFrame(expenses_url, columns=["url"] ).to_csv(expense_csv, index=False)
-        except Exception as e:
-            logging.error(f"- custom.get_mps: {e}")
-    logging.info(f"- custom.get_mps: Writing expense .csv locally to {expense_folder}")
-    return 

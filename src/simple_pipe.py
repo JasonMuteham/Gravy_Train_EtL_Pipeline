@@ -132,11 +132,13 @@ if __name__ == "__main__":
 
             elif tasks[task]["file_type"] == "csv":
                 url=tasks[task]["url"]
-                myduck.csv(db_con, url, sql_table, schema="staging", replace=True)
+                
                 if sql_filter_name:
-                     logging.info(f"- SQL filtering: {sql_filter_name}")
-
-                myduck.load(db_con,sql_table,pipeline["schema"], schema_from="staging",sql_write=sql_write, sql_filter= sql_filter)  # noqa: E501
+                    myduck.csv(db_con, url, sql_table, schema="staging", replace=True)
+                    logging.info(f"- SQL filtering: {sql_filter_name}")
+                    myduck.load(db_con,sql_table,pipeline["schema"], schema_from="staging",sql_write=sql_write, sql_filter= sql_filter)  # noqa: E501
+                else:
+                    myduck.csv(db_con, url, sql_table, pipeline["schema"], replace=True)
             
             elif tasks[task]["file_type"].split(".")[0] == "function":
                 """
