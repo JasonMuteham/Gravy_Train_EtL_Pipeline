@@ -20,11 +20,12 @@ param.mp_csv = "data/mp.csv"
 param.name_history_folder = "data/name_history"
 
 [task.get_constituency_data]
-active = true
+active = false
 description = "Call a custom function to extract constituency & representation data from APIs"
 file_type = "function.custom.get_constituency_data"
 param.file_csv = "data/constituency.csv"
 param.constituency_rep_folder = "data/constituency_representation"
+param.constituency_geo_folder = "data/constituency_geometry"
 
 [task.get_constituency_geometry_data]
 active = false
@@ -40,6 +41,127 @@ url = "data/mp.csv"
 sql_filter = ""
 sql_table = "mp"
 sql_write = "replace"
+
+[task.load_constituency]
+active = false
+description = "Load constituencyMP data from csv file"
+file_type = "csv"
+url = "data/constituency.csv"
+sql_filter = ""
+sql_table = "constituency"
+sql_write = "replace"
+
+[task.get_expense_23_24_data]
+active = false
+file_type = "pandas_csv"
+description = "Get expenses_23_24"
+url = "https://www.theipsa.org.uk/api/download?type=individualBusinessCosts&year=23_24"
+file_path = "data/expenses/individual_business_costs"
+file_name = "expenses_23_24.csv"
+
+[task.get_expense_22_23_data]
+active = false
+file_type = "pandas_csv"
+description = "Get expenses_22_23"
+url = "https://www.theipsa.org.uk/api/download?type=individualBusinessCosts&year=22_23"
+file_path = "data/expenses/individual_business_costs"
+file_name = "expenses_22_23.csv"
+
+[task.get_expense_21_22_data]
+active = false
+file_type = "pandas_csv"
+description = "Get expenses_21_22"
+url = "https://www.theipsa.org.uk/api/download?type=individualBusinessCosts&year=21_22"
+file_path = "data/expenses/individual_business_costs"
+file_name = "expenses_21_22.csv"
+
+[task.get_expense_20_21_data]
+active = false
+file_type = "pandas_csv"
+description = "Get expenses_20_21"
+url = "https://www.theipsa.org.uk/api/download?type=individualBusinessCosts&year=20_21"
+file_path = "data/expenses/individual_business_costs"
+file_name = "expenses_20_21.csv"
+
+[task.get_expense_19_20_data]
+active = false
+file_type = "pandas_csv"
+description = "Get expenses_19_20"
+url = "https://www.theipsa.org.uk/api/download?type=individualBusinessCosts&year=19_20"
+file_path = "data/expenses/individual_business_costs"
+file_name = "expenses_19_20.csv"
+
+[task.get_expense_18_19_data]
+active = false
+file_type = "pandas_csv"
+description = "Get expenses_18_19"
+url = "https://www.theipsa.org.uk/api/download?type=individualBusinessCosts&year=18_19"
+file_path = "data/expenses/individual_business_costs"
+file_name = "expenses_18_19.csv"
+
+[task.get_expense_17_18_data]
+active = false
+file_type = "pandas_csv"
+description = "Get expenses_17_18"
+url = "https://www.theipsa.org.uk/api/download?type=individualBusinessCosts&year=17_18"
+file_path = "data/expenses/individual_business_costs"
+file_name = "expenses_17_18.csv"
+
+[task.get_expense_16_17_data]
+active = false
+file_type = "pandas_csv"
+description = "Get expenses_16_17"
+url = "https://www.theipsa.org.uk/api/download?type=individualBusinessCosts&year=16_17"
+file_path = "data/expenses/individual_business_costs"
+file_name = "expenses_16_17.csv"
+
+[task.get_expense_15_16_data]
+active = false
+file_type = "pandas_csv"
+description = "Get expenses_15_16"
+url = "https://www.theipsa.org.uk/api/download?type=individualBusinessCosts&year=15_16"
+file_path = "data/expenses/individual_business_costs"
+file_name = "expenses_15_16.csv"
+
+[task.get_expense_14_15_data]
+active = false
+file_type = "pandas_csv"
+description = "Get expenses_14_15"
+url = "https://www.theipsa.org.uk/api/download?type=individualBusinessCosts&year=14_15"
+file_path = "data/expenses/individual_business_costs"
+file_name = "expenses_14_15.csv"
+
+[task.get_expense_13_14_data]
+active = false
+file_type = "pandas_csv"
+description = "Get expenses_13_14"
+url = "https://www.theipsa.org.uk/api/download?type=individualBusinessCosts&year=13_14"
+file_path = "data/expenses/individual_business_costs"
+file_name = "expenses_13_14.csv"
+
+[task.get_expense_12_13_data]
+active = false
+file_type = "pandas_csv"
+description = "Get expenses_12_13"
+url = "https://www.theipsa.org.uk/api/download?type=individualBusinessCosts&year=12_13"
+file_path = "data/expenses/individual_business_costs"
+file_name = "expenses_12_13.csv"
+
+[task.get_expense_11_12_data]
+active = false
+file_type = "pandas_csv"
+description = "Get expenses_11_12"
+url = "https://www.theipsa.org.uk/api/download?type=individualBusinessCosts&year=11_12"
+file_path = "data/expenses/individual_business_costs"
+file_name = "expenses_11_12.csv"
+
+[task.get_expense_10_11_data]
+active = false
+file_type = "pandas_csv"
+description = "Get expenses_10_11"
+url = "https://www.theipsa.org.uk/api/download?type=individualBusinessCosts&year=10_11"
+file_path = "data/expenses/individual_business_costs"
+file_name = "expenses_10_11.csv"
 
 [task.load_expenses]
 active = false
@@ -59,6 +181,15 @@ sql_filter = ""
 sql_table = "mp_names"
 sql_write = "replace"
 
+[task.load_constituency_representation]
+active = true
+description = "Load constituency_representation data from csv file"
+file_type = "csv"
+url = "data/constituency_representation/*.csv"
+sql_filter = ""
+sql_table = "constituency_representation"
+sql_write = "replace"
+
 [task.date_table]
 active = false
 file_type = "csv"
@@ -76,12 +207,13 @@ database = "gravy_train.duckdb"
 
 [motherduck.credentials]
 # local duckdb database name. Remote motherduck credentials are stored in secret.toml
-database = "gravy_train_2"
+path = ""
+database = "gravy_train"
 
 #SQL Filter statements, filter the df_upload DataFrame
 [sql.date_select]
 sql = """
 SELECT *
 FROM df_upload
-WHERE "date" >= '2020-01-01' and "date" < '2024-01-01'
+WHERE "date" >= '2020-01-01' and "date" < '2025-01-01'
 """

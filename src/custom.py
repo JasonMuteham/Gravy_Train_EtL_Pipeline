@@ -10,6 +10,7 @@ from tenacity import retry, stop_after_attempt, wait_fixed, TryAgain
 def get_constituency_data(params):
     const_csv = params['file_csv']
     const_folder = params['constituency_rep_folder']
+    geo_folder = params['constituency_geo_folder']
 
     logging.info(f"- custom.get_constituency_data: {params}")
 
@@ -19,7 +20,12 @@ def get_constituency_data(params):
         logging.critical(f"- custom.get_constituency_data: {e}")
         print(e)
         raise 
-
+    try:
+        Path(geo_folder).mkdir(exist_ok=True)
+    except Exception as e:
+        logging.critical(f"- custom.get_constituency_data: {e}")
+        print(e)
+        raise 
     get_constituency_json(const_csv, const_folder=const_folder, geo_folder=geo_folder) 
 
 def get_constituency_json(const_csv, const_folder=None, geo_folder=None):
@@ -92,6 +98,18 @@ def get_constituency_json(const_csv, const_folder=None, geo_folder=None):
                         const_df['constituency_id'] = id
                         const_df.to_csv(f'{const_folder}/rep_{str(id)}.csv', index=False)
                 
+                geo_url = f'https://members-api.parliament.uk/api/Location/Constituency/{id}/Geometry'
+                try:
+                    #r = requests.get(geo_url)
+                    #geo_data = r.json()
+                    df_geo = pd.read_json(geo_url)
+                except Exception as e:
+                        logging.error(f"- custom.get_geometry_json: {e}")
+                else:
+                    if not(df_geo.empty):
+                        df_geo['constituency_id'] = id
+                        df_geo.to_json(f'{geo_folder}/geo_{str(id)}.json', orient='records')
+
 
     logging.info(f"- custom.get_constituency_json: {df.shape}")
     if const_csv is not None:

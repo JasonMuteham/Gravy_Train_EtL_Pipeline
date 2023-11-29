@@ -4,6 +4,7 @@ import env_setup
 import logging
 import tomllib
 import myduck
+import pandas as pd
 import custom # put your custom code in this module # noqa: F401
 
 if __name__ == "__main__":
@@ -139,7 +140,30 @@ if __name__ == "__main__":
                     myduck.load(db_con,sql_table,pipeline["schema"], schema_from="staging",sql_write=sql_write, sql_filter= sql_filter)  # noqa: E501
                 else:
                     myduck.csv(db_con, url, sql_table, pipeline["schema"], replace=True)
-            
+
+            elif tasks[task]["file_type"] == "pandas_csv":
+                url=tasks[task]["url"]
+                try:
+                    Path(tasks[task]['file_path']).mkdir(exist_ok=True)
+                except Exception as e:
+                    print(e)
+                    raise
+                
+                try:
+                    df_download = pd.read_csv(url)
+                except Exception as e:
+                    print(e)
+                    raise
+
+                if df_download.empty:
+                    logging.warning(f"- {task}: No raw data extracted")
+                    failed_tasks += 1
+                    print("Oh No! pipe went out...")
+                else:
+                    file_path = f"{tasks[task]['file_path']}/{tasks[task]['file_name']}"
+                    df_download.to_csv(file_path, index=False)
+                    logging.info(f"- {task}: Result: {df_download.shape} extracted")
+
             elif tasks[task]["file_type"].split(".")[0] == "function":
                 """
                 your custom function call 'function.'<module>.<function>
