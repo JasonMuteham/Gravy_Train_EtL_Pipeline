@@ -28,7 +28,7 @@ param.constituency_rep_folder = "data/constituency_representation"
 param.constituency_geo_folder = "data/constituency_geometry"
 
 [task.load_mps]
-active = false
+active = true
 description = "Load MP data from csv file"
 file_type = "csv"
 url = "data/mp.csv"
@@ -37,8 +37,8 @@ sql_table = "mp"
 sql_write = "replace"
 
 [task.load_constituency]
-active = false
-description = "Load constituencyMP data from csv file"
+active = true
+description = "Load constituency data from csv file"
 file_type = "csv"
 url = "data/constituency.csv"
 sql_filter = ""
@@ -158,7 +158,7 @@ file_path = "data/expenses/individual_business_costs"
 file_name = "expenses_10_11.csv"
 
 [task.load_expenses]
-active = false
+active = true
 description = "Load MP data from csv file"
 file_type = "csv"
 url = "data/expenses/individual_business_costs/*.csv"
@@ -167,7 +167,7 @@ sql_table = "expenses"
 sql_write = "replace"
 
 [task.load_name_history]
-active = false
+active = true
 description = "Load MP name data from csv file"
 file_type = "csv"
 url = "data/name_history/*.csv"
@@ -185,7 +185,7 @@ sql_table = "constituency_representation"
 sql_write = "replace"
 
 [task.date_table]
-active = false
+active = true
 file_type = "csv"
 description = "Date Dimension table"
 url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRfi-0s1R6HmQMW2r_ywPQlpwSvpDVr3s0t6MJPgt88bmHR7R5Md0YWkHpeIj7NtuuSgt0vQiL66t1G/pub?gid=1535779642&single=true&output=csv"
