@@ -96,6 +96,7 @@ def get_constituency_json(const_csv, const_folder=None, geo_folder=None):
                     const_df = pd.json_normalize(rep_data["value"] ,sep='_')
                     if not(const_df.empty):
                         const_df['constituency_id'] = id
+                        const_df.drop(['member_links'], axis=1, inplace=True)
                         const_df.to_csv(f'{const_folder}/rep_{str(id)}.csv', index=False)
                 
                 geo_url = f'https://members-api.parliament.uk/api/Location/Constituency/{id}/Geometry'

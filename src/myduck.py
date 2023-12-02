@@ -93,9 +93,9 @@ def csv(con, url, sql_table, schema="staging", replace=True):
     def read_csv(con, url, sql_table, schema, replace):
         try:
             if replace:
-                sql = f"CREATE OR REPLACE TABLE {schema}.{sql_table} AS SELECT * FROM read_csv_auto('{url}', null_padding = true)"  # noqa: E501
+                sql = f"CREATE OR REPLACE TABLE {schema}.{sql_table} AS SELECT * FROM read_csv_auto('{url}', null_padding = false)"  # noqa: E501
             else:
-                sql = f"INSERT INTO {schema}.{sql_table} SELECT * FROM read_csv_auto('{url}', null_padding = true)"  # noqa: E501
+                sql = f"INSERT INTO {schema}.{sql_table} SELECT * FROM read_csv_auto('{url}', null_padding = false)"  # noqa: E501
 
             logging.info(f"- SQL: {sql}")
             con.sql(sql)

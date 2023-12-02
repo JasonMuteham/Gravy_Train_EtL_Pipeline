@@ -27,12 +27,6 @@ param.file_csv = "data/constituency.csv"
 param.constituency_rep_folder = "data/constituency_representation"
 param.constituency_geo_folder = "data/constituency_geometry"
 
-[task.get_constituency_geometry_data]
-active = false
-description = "Call a custom function to extract constituency geometry data from APIs"
-file_type = "function.custom.get_constituency_geometry_data"
-param.file_csv = "data/constituency_geometry.csv"
-
 [task.load_mps]
 active = false
 description = "Load MP data from csv file"
